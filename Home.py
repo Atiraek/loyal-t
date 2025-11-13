@@ -1,13 +1,18 @@
-# Home.py
+import re
+import random
+import sqlite3
+import uuid
+import qrcode
 import streamlit as st
-import sqlite3, uuid, qrcode
 from io import BytesIO
+
 
 def get_db():
     conn = sqlite3.connect("loyalty.db")
     conn.execute("""CREATE TABLE IF NOT EXISTS customers (
         id TEXT PRIMARY KEY,
         name TEXT,
+        email TEXT UNIQUE,
         identifier TEXT UNIQUE
     )""")
     conn.execute("""CREATE TABLE IF NOT EXISTS visits (
@@ -17,16 +22,42 @@ def get_db():
     )""")
     return conn
 
+
+def valid_email(e):
+    return re.match(r"[^@]+@[^@]+\.[^@]+", e)
+
+
+def generate_unique_code(conn):
+    while True:
+        code = str(random.randint(10000000, 99999999))  # 8-digit numeric
+        exists = conn.execute("SELECT 1 FROM customers WHERE identifier=?", (code,)).fetchone()
+        if not exists:
+            return code
+
+
 st.title("Customer Registration")
-name = st.text_input("Customer name")
+name = st.text_input("Name")
+email = st.text_input("Email")
+
+
 if st.button("Register"):
-    conn = get_db()
-    cid = str(uuid.uuid4())
-    identifier = str(uuid.uuid4())
-    conn.execute("INSERT INTO customers VALUES (?,?,?)", (cid, name, identifier))
-    conn.commit()
-    # generate QR
-    img = qrcode.make(identifier)
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    st.image(buf.getvalue(), caption=f"QR for {name}")
+    if not name or not email:
+        st.error("Name and email required")
+    elif not valid_email(email):
+        st.error("Invalid email format")
+    else:
+        conn = get_db()
+        # ensure unique email
+        existing = conn.execute("SELECT 1 FROM customers WHERE email=?", (email,)).fetchone()
+        if existing:
+            st.error("Email already registered")
+        else:
+            cid = str(uuid.uuid4())
+            code = generate_unique_code(conn)  # see next section
+            conn.execute("INSERT INTO customers (id,name,email,identifier) VALUES (?,?,?,?)",
+                         (cid, name, email, code))
+            conn.commit()
+            img = qrcode.make(code)
+            buf = BytesIO()
+            img.save(buf, format="PNG")
+            st.image(buf.getvalue(), caption=f"QR for {name}. Save for scanning at each visit!")
