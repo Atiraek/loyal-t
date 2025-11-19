@@ -1,0 +1,12 @@
+{
+    email {$ACME_EMAIL}
+    # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+{$GHOST_DOMAIN} {
+    reverse_proxy {$GHOST_PROXY}
+}
+
+{$LOYALT_DOMAIN} {
+    reverse_proxy loyalt-streamlit:{$LOYALT_PORT}
+}

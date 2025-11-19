@@ -23,10 +23,12 @@ if st.button("Record Visit") and identifier:
     if not cust:
         st.error("Customer not found")
     else:
-        count = db.record_visit(conn, cust[0])
-        st.success(f"{cust[1]} now has {count} visits")
-        if count % 4 == 0:
-            st.info("Base reward available!")
+        total = db.record_visit(conn, cust[0])
+        streak, threshold = db.visit_progress(total)
+        st.success(f"{cust[1]} now has {total} total visits")
+        st.info(f"Current streak: {streak}/{threshold}")
+        if streak == threshold:
+            st.success("🎉 Base reward available!")
 
 if st.button("Logout"):
     from modules import auth
