@@ -27,5 +27,11 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./caddy_certs:/data
       # - /home/ubuntu/.caddy:/root/.caddy
+    environment:
+        - ACME_EMAIL=${ACME_EMAIL}
+        - GHOST_DOMAIN=${GHOST_DOMAIN}
+        - GHOST_PROXY=${GHOST_PROXY}
+        - LOYALT_DOMAIN=${LOYALT_DOMAIN}
+        - LOYALT_PORT=${LOYALT_PORT}
     networks:
       - caddy_net
