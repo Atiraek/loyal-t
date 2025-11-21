@@ -20,7 +20,7 @@ customers = db.all_customers_with_visits(conn)
 cols = ["Name"]
 if config.SHOW_EMAILS:
     cols.append("Email")
-cols += ["Identifier", "Total Visits", "Streak"]
+cols += ["ID", "Total Visits", "Streak"]
 
 table_data = []
 for cid, name, email, identifier, visits in customers:
@@ -32,25 +32,23 @@ for cid, name, email, identifier, visits in customers:
     table_data.append(row)
 
 df = pd.DataFrame(table_data, columns=cols)
-st.table(df)
 
 # Search feature
-st.subheader("Search Customer")
-query = st.text_input("Search by name, email, or code")
+query = st.text_input("Search by name, email, or code.\n\n_[click outside to apply]_")
 if query:
-    results = db.search_customer(conn, query)
-    if results:
-        for cid, name, email, identifier, visits in results:
-            streak, threshold = db.visit_progress(visits)
-            st.write(f"**{name}** ({identifier})")
-            if config.SHOW_EMAILS:
-                st.write(f"Email: {email}")
-            st.write(f"Total visits: {visits}")
-            st.write(f"Current streak: {streak}/{threshold}")
-            if streak == threshold:
-                st.success("🎉 Reward available! 🎉")
-    else:
-        st.warning("No matching customer found.")
+    query_lower = query.lower()
+    df = df[df.apply(lambda row:
+        query_lower in str(row["Name"]).lower() or
+        query_lower in str(row["Email"]).lower() or
+        query_lower in str(row["ID"]).lower(),
+        axis=1
+    )]
+
+# Show filtered table
+if config.SHOW_EMAILS:
+    st.dataframe(df, hide_index=True)
+else:
+    st.dataframe(df.drop(columns=["Email"]), hide_index=True)
 
 if st.button("Logout"):
     auth.logout()
