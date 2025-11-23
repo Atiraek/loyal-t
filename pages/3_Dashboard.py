@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from modules import db, auth, config
+from modules.utils import style_achieved_streak
+
 
 if not st.session_state.get("logged_in"):
     st.warning("Please login first")
@@ -45,10 +47,38 @@ if query:
     )]
 
 # Show filtered table
-if config.SHOW_EMAILS:
-    st.dataframe(df, hide_index=True)
-else:
-    st.dataframe(df.drop(columns=["Email"]), hide_index=True)
+# if config.SHOW_EMAILS:
+#     st.dataframe(df, hide_index=True)
+# else:
+#     st.dataframe(df.drop(columns=["Email"]), hide_index=True)
+
+# Create a copy of the dataframe for display purposes
+display_df = df.drop(columns=["Email"]) if not config.SHOW_EMAILS else df.copy()
+
+# Apply the conditional row styling
+# axis=1 applies the function across rows
+styled_table = display_df.style.apply(
+    style_achieved_streak, 
+    axis=1, 
+    # Pass the threshold as an argument to the function
+    reward_threshold=config.REWARD_VISITS
+)
+
+# Pass the styled object to st.dataframe
+st.dataframe(
+    styled_table,
+    hide_index=True,
+    # column_config can still be used for individual cell/header formatting
+    column_config={
+        "Streak": st.column_config.TextColumn(
+            "Streak",
+            help="Progress toward reward threshold",
+            width="small",
+            validate=".*"
+        )
+    },
+    use_container_width=True
+)
 
 if st.button("Logout"):
     auth.logout()

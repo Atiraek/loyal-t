@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+STREAK_HIGHLIGHT = os.getenv("STREAK_HIGHLIGHT", "#BDFC93")  # Light yellow
+
 # Database path
 DB_PATH = os.getenv("DB_PATH", "loyalty.db")
 

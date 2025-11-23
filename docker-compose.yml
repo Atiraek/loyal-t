@@ -1,11 +1,10 @@
 networks:
   caddy_net:
-    external: true   # reuse your existing caddy_net if you already created it
-    # if not created yet, run: docker network create caddy_net
+    external: true
 
 services:
   streamlit:
-    build: .  # path to your Streamlit app Dockerfile
+    build: .
     container_name: loyalt-streamlit
     restart: always
     networks:
@@ -14,7 +13,7 @@ services:
       - "8501"   # expose to the network (not host)
     volumes:
       # - ./loyalty-streamlit:/app   # optional: mount code for dev
-      - ./data:/app/data           # persist SQLite DB
+      - ./data:/app/data             # persist SQLite DB
 
   caddy:
     image: caddy:latest
@@ -26,7 +25,6 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./caddy_certs:/data
-      # - /home/ubuntu/.caddy:/root/.caddy
     environment:
         - ACME_EMAIL=${ACME_EMAIL}
         - GHOST_DOMAIN=${GHOST_DOMAIN}
